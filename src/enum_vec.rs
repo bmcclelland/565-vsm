@@ -1,7 +1,7 @@
 pub use crate::smart_enum::*;
 
 pub struct EnumVec<E,V> {
-    data: Vec<V>,
+    data: Vec<Option<V>>,
     phantom: std::marker::PhantomData<E>,
 }
 
@@ -9,18 +9,16 @@ impl<E,V> EnumVec<E,V>
     where E: Copy + Into<usize> + SmartEnum<E>,
 {
     pub fn fill(mut f: impl FnMut(E) -> V) -> Self {
-        unsafe {
-            let mut data = Vec::new();
-            data.resize_with(E::LEN, || std::mem::MaybeUninit::uninit().assume_init());
+        let mut data = Vec::new();
+        data.resize_with(E::LEN, || None);
 
-            for (i,&e) in E::VALUES.iter().enumerate() {
-                data[i] = f(e);
-            }
+        for i in 0..E::LEN {
+            data[i] = Some(f(E::VALUES[i]));
+        }
 
-            Self {
-                data,
-                phantom: std::marker::PhantomData,
-            }
+        Self {
+            data,
+            phantom: std::marker::PhantomData,
         }
     }
 }
@@ -31,7 +29,7 @@ impl<E,V> std::ops::Index<E> for EnumVec<E,V>
     type Output = V;
 
     fn index(&self, e: E) -> &Self::Output {
-        &self.data[e.into()]
+        (&self.data[e.into()]).as_ref().unwrap()
     }
 }
     
