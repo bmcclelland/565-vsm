@@ -1,8 +1,8 @@
 use glium::{
     Surface,
+    uniform,
     index::NoIndices,
     index::PrimitiveType,
-    uniforms::EmptyUniforms,
     glutin::{
         event_loop::ControlFlow,
         event::*,
@@ -10,16 +10,20 @@ use glium::{
 };
 use std::time::{Duration,Instant};
 use vsm::{ MeshId, ProgramId, };
+use nalgebra_glm as glm;
 
 const FRAME_TIME: Duration = Duration::from_nanos(16_666_667);
+
+struct Radians(pub f32);
         
 fn main() {
     let (display, event_loop) = vsm::display::make();
     let ctx = vsm::MyContext::new(&display);
 
     let indices  = NoIndices(PrimitiveType::TrianglesList);
-    let uniforms = EmptyUniforms;
     let draw_params = Default::default();
+
+    let mut rad = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         wait_for_frame(control_flow);
@@ -32,6 +36,15 @@ fn main() {
     
         let mesh    = &ctx.meshes[MeshId::Square];
         let program = &ctx.programs[ProgramId::Std];
+        let mvp = make_mvp(
+            glm::vec2(-0.5, 0.5),
+            glm::vec2(0.5, 0.5),
+            Radians(rad),
+        );
+        rad += 0.001;
+        let uniforms = uniform! {
+            u_mvp: *mvp.as_ref()
+        };
 
         let mut target = display.draw();
         target.clear_color(0.1, 0.1, 0.4, 1.0);
@@ -40,6 +53,18 @@ fn main() {
         target.finish()
             .unwrap();
     });
+}
+
+fn make_mvp(
+    mpos: glm::Vec2,
+    mscale: glm::Vec2,
+    mangle: Radians,
+    ) -> glm::Mat4
+{
+    let t = glm::translation(&glm::vec3(mpos.x, mpos.y, 0.0));
+    let s = glm::scaling(&glm::vec3(mscale.x, mscale.y, 1.0));
+    let r = glm::rotation(mangle.0, &glm::vec3(0.0, 0.0, 1.0));
+    t * r * s * glm::Mat4::identity()
 }
 
 fn wait_for_frame(cf: &mut ControlFlow) {

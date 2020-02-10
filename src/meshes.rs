@@ -9,15 +9,14 @@ pub struct Vert {
 
 implement_vertex!(Vert, pos, tc);
 
-pub const VERTS: [Vert; 3] = [
-    Vert { pos: [0.0, 0.0], tc: [0.0, 0.0] },
-    Vert { pos: [1.0, 0.0], tc: [0.0, 0.0] },
-    Vert { pos: [0.0, 1.0], tc: [0.0, 0.0] },
+pub const VERTS: [Vert; 6] = [
+    Vert { pos: [-0.5, -0.5], tc: [0.0, 0.0] },
+    Vert { pos: [ 0.5, -0.5], tc: [1.0, 0.0] },
+    Vert { pos: [ 0.5,  0.5], tc: [1.0, 1.0] },
+    Vert { pos: [-0.5, -0.5], tc: [0.0, 0.0] },
+    Vert { pos: [ 0.5,  0.5], tc: [1.0, 1.0] },
+    Vert { pos: [-0.5,  0.5], tc: [0.0, 1.0] },
 ];
-
-pub fn square(display: &Display) -> VertexBuffer<Vert> {
-    VertexBuffer::new(display, &VERTS).unwrap()
-}
 
 smart_enum! { MeshId: u8 =
     Square,
