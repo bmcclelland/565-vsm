@@ -1,5 +1,5 @@
 use glium::{ implement_vertex, Display, VertexBuffer };
-use crate::enum_vec::*;
+use crate::util::*;
 
 #[derive(Copy,Clone)]
 pub struct Vert {

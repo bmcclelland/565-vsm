@@ -1,5 +1,5 @@
 use glium::Display;
-use crate::enum_vec::*;
+use crate::util::*;
 pub use glium::Program;
 
 const VSHADER: &str = r#"

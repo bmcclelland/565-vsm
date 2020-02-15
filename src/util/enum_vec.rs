@@ -1,4 +1,4 @@
-pub use crate::smart_enum::*;
+pub use super::smart_enum::*;
 
 pub struct EnumVec<E,V> {
     data: Vec<Option<V>>,

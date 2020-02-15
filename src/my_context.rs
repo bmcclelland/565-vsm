@@ -1,5 +1,5 @@
 use glium::Display;
-use crate::enum_vec::*;
+use crate::util::*;
 use super::meshes::*;
 use super::programs::*;
 
