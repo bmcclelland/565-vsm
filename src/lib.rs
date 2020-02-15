@@ -6,6 +6,7 @@ pub mod programs;
 pub mod display;
 pub mod my_context;
 pub mod util;
+pub mod vm;
 
 pub use my_context::*;
 pub use meshes::MeshId;

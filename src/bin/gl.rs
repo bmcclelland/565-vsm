@@ -9,21 +9,38 @@ use glium::{
     },
 };
 use std::time::{Duration,Instant};
-use vsm::{ MeshId, ProgramId, };
+use vsm::{ 
+    MeshId, 
+    ProgramId, 
+    Radians,
+    Pos,
+    Scale,
+    Ent,
+};
 use nalgebra_glm as glm;
 
 const FRAME_TIME: Duration = Duration::from_nanos(16_666_667);
 
-struct Radians(pub f32);
-        
 fn main() {
     let (display, event_loop) = vsm::display::make();
-    let ctx = vsm::MyContext::new(&display);
+    let mut ctx = vsm::MyContext::new(&display);
+
+    ctx.ents.push(Ent {
+        pos: Pos::new(0.0, 0.0),
+        scale: Scale::new(0.33, 0.33), 
+        angle: Radians(0.0),
+        mesh: MeshId::Square,
+    });
+    
+    ctx.ents.push(Ent {
+        pos: Pos::new(1.0, 1.0),
+        scale: Scale::new(0.5, 0.5),
+        angle: Radians(1.0),
+        mesh: MeshId::Square,
+    });
 
     let indices  = NoIndices(PrimitiveType::TrianglesList);
     let draw_params = Default::default();
-
-    let mut rad = 0.0;
 
     event_loop.run(move |event, _, control_flow| {
         wait_for_frame(control_flow);
@@ -34,24 +51,22 @@ fn main() {
             _ => {}
         }
     
-        let mesh    = &ctx.meshes[MeshId::Square];
-        let program = &ctx.programs[ProgramId::Std];
-        let mvp = make_mvp(
-            glm::vec2(-0.5, 0.5),
-            glm::vec2(0.5, 0.5),
-            Radians(rad),
-        );
-        rad += 0.001;
-        let uniforms = uniform! {
-            u_mvp: *mvp.as_ref()
-        };
-
         let mut target = display.draw();
         target.clear_color(0.1, 0.1, 0.4, 1.0);
-        target.draw(mesh, &indices, program, &uniforms, &draw_params)
-            .unwrap();
-        target.finish()
-            .unwrap();
+        
+        for ent in ctx.ents.iter() {
+            let mesh = &ctx.meshes[ent.mesh];
+            let program = &ctx.programs[ProgramId::Std];
+            let mvp = make_mvp(ent.pos, ent.scale, ent.angle);
+            let uniforms = uniform! {
+                u_mvp: *mvp.as_ref()
+            };
+
+            target.draw(mesh, &indices, program, &uniforms, &draw_params)
+                .unwrap();
+        }
+        
+        target.finish().unwrap();
     });
 }
 
