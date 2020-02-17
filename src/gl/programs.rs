@@ -6,6 +6,7 @@ const VSHADER: &str = r#"
     #version 330 core
 
     uniform mat4 u_mvp;
+    uniform vec3 u_color;
 
     layout (location = 0) in vec2 pos;
     layout (location = 1) in vec2 tc;
@@ -15,7 +16,7 @@ const VSHADER: &str = r#"
     void main()
     {
        gl_Position = u_mvp * vec4(pos, 0.0, 1.0);
-       ourColor = vec3(1, 1, 1);
+       ourColor = u_color;
     }
 "#;
 

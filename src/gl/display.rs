@@ -7,7 +7,7 @@ use glium::{
     },
 };
 
-pub fn make() -> (Display, EventLoop<()>) {
+pub fn make_display() -> (Display, EventLoop<()>) {
     let window = WindowBuilder::new()
         .with_resizable(true);
     let context = ContextBuilder::new();

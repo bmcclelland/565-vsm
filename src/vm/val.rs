@@ -14,3 +14,9 @@ impl Default for Val {
         Self(0)
     }
 }
+
+impl Val {
+    pub fn from_bool(b: bool) -> Self {
+        Self(if b { 1 } else { 0 })
+    }
+}
