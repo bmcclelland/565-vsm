@@ -7,29 +7,42 @@ const VSHADER: &str = r#"
 
     uniform mat4 u_mvp;
     uniform vec3 u_color;
-
-    layout (location = 0) in vec2 pos;
-    layout (location = 1) in vec2 tc;
-
-    out vec3 ourColor;
+    uniform vec2 u_tpos;
+    uniform vec2 u_tscale;
+    
+    layout (location = 0) in vec2 vert_pos;
+    layout (location = 1) in vec2 vert_texcoord;
+   
+    smooth out vec2 frag_texcoord;
+    out vec3 frag_color;
 
     void main()
     {
-       gl_Position = u_mvp * vec4(pos, 0.0, 1.0);
-       ourColor = u_color;
+       gl_Position = u_mvp * vec4(vert_pos, 0.0, 1.0);
+       frag_color = u_color;
+       frag_texcoord = u_tpos + vert_texcoord * u_tscale;        
     }
 "#;
 
 const HSHADER: &str = r#"
     #version 330 core
 
-    out vec4 FragColor;
+    uniform sampler2D u_sampler;
 
-    in vec3 ourColor;
+    in vec3 frag_color;
+    smooth in vec2 frag_texcoord;
+    
+    out vec4 out_color;
 
     void main()
     {
-       FragColor = vec4(ourColor, 1.0f);
+        vec2 flipped_texcoord = vec2(
+            frag_texcoord.x, 
+            1 - frag_texcoord.y
+        );
+
+        vec4 tex_color = texture2D(u_sampler, flipped_texcoord);
+        out_color = tex_color;
     }
 "#;
 

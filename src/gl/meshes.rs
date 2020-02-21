@@ -3,19 +3,19 @@ use crate::util::*;
 
 #[derive(Copy,Clone)]
 pub struct Vert {
-    pub pos: [f32; 2],
-    pub tc:  [f32; 2],
+    pub vert_pos: [f32; 2],
+    pub vert_texcoord:  [f32; 2],
 }
 
-implement_vertex!(Vert, pos, tc);
+implement_vertex!(Vert, vert_pos, vert_texcoord);
 
 pub const VERTS: [Vert; 6] = [
-    Vert { pos: [-0.5, -0.5], tc: [0.0, 0.0] },
-    Vert { pos: [ 0.5, -0.5], tc: [1.0, 0.0] },
-    Vert { pos: [ 0.5,  0.5], tc: [1.0, 1.0] },
-    Vert { pos: [-0.5, -0.5], tc: [0.0, 0.0] },
-    Vert { pos: [ 0.5,  0.5], tc: [1.0, 1.0] },
-    Vert { pos: [-0.5,  0.5], tc: [0.0, 1.0] },
+    Vert { vert_pos: [-0.5, -0.5], vert_texcoord: [0.0, 0.0] },
+    Vert { vert_pos: [ 0.5, -0.5], vert_texcoord: [1.0, 0.0] },
+    Vert { vert_pos: [ 0.5,  0.5], vert_texcoord: [1.0, 1.0] },
+    Vert { vert_pos: [-0.5, -0.5], vert_texcoord: [0.0, 0.0] },
+    Vert { vert_pos: [ 0.5,  0.5], vert_texcoord: [1.0, 1.0] },
+    Vert { vert_pos: [-0.5,  0.5], vert_texcoord: [0.0, 1.0] },
 ];
 
 smart_enum! { MeshId: u8 =

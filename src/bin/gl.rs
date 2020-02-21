@@ -33,6 +33,16 @@ fn main() {
     let indices  = NoIndices(PrimitiveType::TrianglesList);
     let draw_params = Default::default();
 
+    let texmap = font::UnfinishedTexMap::new((128,128), 32, 4)
+        .add_string("add")
+        .add_string("sub")
+        .add_string("mul")
+        .add_string("div")
+        .finish(&display);
+    let (tpos, tscale) = texmap.get_attrs("div").unwrap();
+//    let tpos = Vec2::new(0.0, 0.0);
+//    let tscale = Vec2::new(1.0, 1.0);
+
     event_loop.run(move |event, _, control_flow| {
         wait_for_frame(control_flow);
 
@@ -65,6 +75,9 @@ fn main() {
             let uniforms = uniform! {
                 u_mvp: *mvp.as_ref(),
                 u_color: *ent.color.as_ref(),
+                u_sampler: texmap.gl_image(),
+                u_tpos:    *tpos.as_ref(),
+                u_tscale:  *tscale.as_ref(),
             };
 
             target.draw(mesh, &indices, program, &uniforms, &draw_params)
@@ -90,7 +103,7 @@ const DRAW_RES_X: f32 = 400.0;
 const DRAW_RES_Y: f32 = 300.0;
 const ASPECT: f32 = DRAW_RES_X / DRAW_RES_Y;
 const FOV: f32 = PI / 4.0;
-const UP_ANGLE: f32 = PI / 2.0;
+//const UP_ANGLE: f32 = PI / 2.0;
 
 fn make_mvp(
     mpos: glm::Vec2,
@@ -158,9 +171,9 @@ fn parallax_ortho_cam(cam: &Vec2, dim: &Vec2, height: f32) -> Mat4 {
     parallax_ortho(cam.x, cam.y, dim.x, dim.y, height)
 }
 
-fn deg_to_rad(deg: f32) -> f32 {
-    deg * std::f32::consts::PI / 180.0
-}
+//fn deg_to_rad(deg: f32) -> f32 {
+//    deg * std::f32::consts::PI / 180.0
+//}
 
 fn make_vm() -> VM {
     use vsm::vm::*;
