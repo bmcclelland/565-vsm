@@ -148,7 +148,6 @@ impl UnfinishedTexMap {
 
     pub fn finish(self, display: &Display) -> TexMap {
         let (image, map) = self.make_sheet();
-        image.save("test.png").unwrap(); // TODO remove
         let image_dims = image.dimensions();
         let raw_image = RawImage2d::from_raw_rgba(image.into_raw(), image_dims);
         let gl_image = CompressedSrgbTexture2d::new(display, raw_image).unwrap();
