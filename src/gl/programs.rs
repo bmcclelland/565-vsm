@@ -41,7 +41,7 @@ const HSHADER: &str = r#"
             1 - frag_texcoord.y
         );
 
-        vec4 tex_color = texture2D(u_sampler, flipped_texcoord);
+        vec4 tex_color = vec4(frag_color, 1.0) * texture2D(u_sampler, flipped_texcoord);
         out_color = tex_color;
     }
 "#;

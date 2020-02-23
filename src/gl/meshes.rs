@@ -23,7 +23,7 @@ smart_enum! { MeshId: u8 =
 }
 
 pub type Mesh = VertexBuffer<Vert>;
-   
+
 pub fn init_meshes(display: &Display) -> EnumVec<MeshId, Mesh> {
     macro_rules! mesh(
         ($val:ident) => {

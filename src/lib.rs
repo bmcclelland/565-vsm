@@ -5,3 +5,4 @@ pub mod util;
 pub mod vm;
 pub mod gl;
 pub mod app;
+pub mod consts;

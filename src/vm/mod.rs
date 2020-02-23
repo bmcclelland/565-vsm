@@ -8,38 +8,49 @@ use insts::*;
 
 pub use insts::Inst;
 pub use val::Val;
+pub type Prog = Vec<Inst>;
 
 pub struct VM {
-    prog:   Vec<Inst>,
-    mem:    Vec<Val>,
-    ip:     usize,
-    output: Vec<String>,
+    prog:    Prog,
+    mem:     Vec<Val>,
+    pc:      usize,
+    next_pc: usize,
+    output:  Vec<String>,
 }
 
 impl VM {
-    pub fn new(prog: Vec<Inst>) -> Self {
+    pub fn new() -> Self {
         Self {
-            prog,
-            mem: Vec::new(),
-            ip: 0,
-            output: Vec::new(),
+            prog:    Vec::new(),
+            mem:     Vec::new(),
+            pc:      0,
+            next_pc: 0,
+            output:  Vec::new(),
         }
     }
 
-    pub fn insts(&self) -> impl Iterator<Item = &Inst> {
+    pub fn load(&mut self, prog: Prog) {
+        self.prog = prog;
+        self.mem.clear();
+        self.pc = 0;
+        self.next_pc = 0;
+        self.output.clear();
+    }
+
+    pub fn insts(&self) -> std::slice::Iter<Inst> {
         self.prog.iter()
     }
-    
-    pub fn mem(&self) -> impl Iterator<Item = &Val> {
+
+    pub fn mem(&self) -> std::slice::Iter<Val> {
         self.mem.iter()
     }
 
-    pub fn ip(&self) -> usize {
-        self.ip
+    pub fn pc(&self) -> usize {
+        self.pc
     }
 
     pub fn live(&self) -> bool {
-        self.ip < self.prog.len()
+        self.pc < self.prog.len()
     }
 
     pub fn output(&self) -> &[String] {
@@ -49,17 +60,21 @@ impl VM {
     fn pop(&mut self) -> Val {
         self.mem.pop().unwrap()
     }
-    
+
     fn push(&mut self, v: Val) {
         self.mem.push(v);
     }
 
-    pub fn step(&mut self) {
-        print!("{:?}\t\t", self.prog[self.ip]);
+    pub fn advance(&mut self) {
+        self.pc = self.next_pc;
+    }
+
+    pub fn exec(&mut self) {
+        print!("{:?}\t\t", self.prog[self.pc]);
 
         use Inst::*;
-        let mut next_ip = self.ip + 1;
-        match &self.prog[self.ip] {
+        self.next_pc = self.pc + 1;
+        match &self.prog[self.pc] {
             Push(val) => {
                 self.mem.push(*val);
             }
@@ -71,14 +86,14 @@ impl VM {
             Dup => {
                 self.mem.push(*self.mem.last().unwrap());
             }
-            
+
             Dup2 => {
                 let n = self.mem.len();
                 assert!(n >= 2);
                 self.mem.push(self.mem[n-2]);
                 self.mem.push(self.mem[n-1]);
             }
-           
+
             Add => self.call2(add),
             Sub => self.call2(sub),
             Mul => self.call2(mul),
@@ -89,23 +104,23 @@ impl VM {
             CmpNE => self.call2(ne),
             CmpGE => self.call2(ge),
             CmpGT => self.call2(gt),
-            
+
             CBR(i) => {
                 let i = *i;
                 if self.pop().0 != 0 {
-                    next_ip = i;
+                    self.next_pc = i;
                 }
             }
-            
+
             BR(i) => {
-                next_ip = *i;
+                self.next_pc = *i;
             }
-            
+
             Print => {
                 let v = self.pop();
                 self.output.push(format!("{:?}", v));
             }
-            
+
             Peek => {
                 match self.mem.last() {
                     Some(v) => self.output.push(format!("{:?}", v)),
@@ -115,27 +130,23 @@ impl VM {
         }
 
         println!("{:?}", self.mem);
-        self.ip = next_ip;
     }
-    
+
     fn call1(&mut self, f: fn(Val)->Val) {
         let a = self.pop();
         self.push(f(a));
-        self.ip += 1;
     }
-    
+
     fn call2(&mut self, f: fn(Val,Val)->Val) {
         let b = self.pop();
         let a = self.pop();
         self.push(f(a, b));
-        self.ip += 1;
     }
-    
+
     fn call3(&mut self, f: fn(Val,Val,Val)->Val) {
         let c = self.pop();
         let b = self.pop();
         let a = self.pop();
         self.push(f(a,b,c));
-        self.ip += 1;
     }
 }

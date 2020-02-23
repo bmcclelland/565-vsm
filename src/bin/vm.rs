@@ -11,13 +11,15 @@ fn main() {
         Peek,
     ];
 
-    let mut vm = VM::new(prog);
+    let mut vm = VM::new();
+    vm.load(prog);
 
     println!("INST\t\tARGS\t\tMEM");
     println!("----------------------------------------");
-    
+
     while vm.live() {
-        vm.step();
+        vm.advance();
+        vm.exec();
     }
 
     println!("\nOUTPUT");
@@ -27,4 +29,3 @@ fn main() {
         println!("{}", line);
     }
 }
-    

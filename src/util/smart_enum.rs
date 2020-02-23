@@ -10,9 +10,9 @@ macro_rules! smart_enum{
     (@count $i:ident) => {
         1
     };
-    
+
     (@count $i:ident, $($is:ident),+$(,)?) => {
-        1 + smart_enum!(@count $($is),+) 
+        1 + smart_enum!(@count $($is),+)
     };
 
     ($name: ident: $prim: ident = $($i: ident),+$(,)?) => {

@@ -5,7 +5,7 @@ pub struct EnumVec<E,V> {
     phantom: std::marker::PhantomData<E>,
 }
 
-impl<E,V> EnumVec<E,V> 
+impl<E,V> EnumVec<E,V>
     where E: Copy + Into<usize> + SmartEnum<E>,
 {
     pub fn fill(mut f: impl FnMut(E) -> V) -> Self {
@@ -32,7 +32,7 @@ impl<E,V> std::ops::Index<E> for EnumVec<E,V>
         (&self.data[e.into()]).as_ref().unwrap()
     }
 }
-    
+
 #[macro_export]
 macro_rules! enum_vec (
     ($k:ident -> $v: ident $match: tt) => {

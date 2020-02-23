@@ -9,7 +9,7 @@ use glium::{
     },
 };
 use std::time::{Duration,Instant};
-use vsm::{ 
+use vsm::{
     gl::*,
     util::*,
     app::*,
@@ -27,21 +27,55 @@ const Z_FAR: f32 = 1000.0;
 fn main() {
     let (display, event_loop) = vsm::gl::make_display();
     let mut app = App::new(&display);
-    let mut vm  = make_vm();
+    app.vm.load(make_prog());
     let mut vm_tick = 0;
+    enum VMToggle { Advance, Exec };
+    let mut vm_toggle = VMToggle::Advance;
 
     let indices  = NoIndices(PrimitiveType::TrianglesList);
-    let draw_params = Default::default();
+    let draw_params = {
+        use glium::*;
+        DrawParameters {
+            blend: Blend::alpha_blending(),
+            .. Default::default()
+        }
+    };
 
-    let texmap = font::UnfinishedTexMap::new((128,128), 32, 4)
+    let texmap = font::UnfinishedTexMap::new((512,512), 32, (4,4))
+        // TODO this is real bad
+        .add_image("inst", "data/inst.png")
+        .add_image("val", "data/val.png")
+        .add_string("push")
+        .add_string("pop")
+        .add_string("dup")
+        .add_string("dup2")
         .add_string("add")
         .add_string("sub")
         .add_string("mul")
         .add_string("div")
+        .add_string("print")
+        .add_string("peek")
+        .add_string(">")
+        .add_string(">=")
+        .add_string("==")
+        .add_string("!=")
+        .add_string("<=")
+        .add_string("<")
+        .add_string("cbr")
+        .add_string("br")
+        .add_string("?")
+        .add_string("_")
+        .add_string("0")
+        .add_string("1")
+        .add_string("2")
+        .add_string("3")
+        .add_string("4")
+        .add_string("5")
+        .add_string("6")
+        .add_string("7")
+        .add_string("8")
+        .add_string("9")
         .finish(&display);
-    let (tpos, tscale) = texmap.get_attrs("div").unwrap();
-//    let tpos = Vec2::new(0.0, 0.0);
-//    let tscale = Vec2::new(1.0, 1.0);
 
     event_loop.run(move |event, _, control_flow| {
         wait_for_frame(control_flow);
@@ -51,30 +85,30 @@ fn main() {
             Some(Q) => *control_flow = ControlFlow::Exit,
             _ => {}
         }
-    
+
         let mut target = display.draw();
         target.clear_color(0.1, 0.1, 0.4, 1.0);
+        app.render_prog();
 
-        app.ents.clear();
-        let mut pos = Vec2::new(0.0, 0.0);
-        for inst in vm.insts().skip(vm.ip()) {
-            app.push_inst(*inst, pos);
-            pos.y += 32.0;
-        }
-
-        pos = Vec2::new(-100.0, 0.0);
-        for mem in vm.mem() {
-            app.push_mem(*mem, pos);
-            pos.y += 32.0;
-        }
-        
         for ent in app.ents.iter() {
+            let (tpos, tscale) = texmap.get_attrs(ent.tex).unwrap();
             let mesh = &app.meshes[ent.mesh];
             let program = &app.programs[ProgramId::Std];
-            let mvp = make_mvp(ent.pos, ent.scale, ent.angle);
+
+            let mvp = if ent.natural {
+                let scale = Vec2::new(
+                    ent.scale.x * tscale.x * texmap.dims().0 as f32,
+                    ent.scale.y * tscale.y * texmap.dims().1 as f32,
+                );
+                make_mvp(ent.pos, scale, ent.angle)
+            }
+            else {
+                make_mvp(ent.pos, ent.scale, ent.angle)
+            };
+
             let uniforms = uniform! {
-                u_mvp: *mvp.as_ref(),
-                u_color: *ent.color.as_ref(),
+                u_mvp:     *mvp.as_ref(),
+                u_color:   *ent.color.as_ref(),
                 u_sampler: texmap.gl_image(),
                 u_tpos:    *tpos.as_ref(),
                 u_tscale:  *tscale.as_ref(),
@@ -83,19 +117,28 @@ fn main() {
             target.draw(mesh, &indices, program, &uniforms, &draw_params)
                 .unwrap();
         }
-        
+
         target.finish().unwrap();
 
         vm_tick += 1;
-        if vm_tick >= 300 {
+        if vm_tick >= 200 {
             vm_tick = 0;
-            if vm.live() {
-                vm.step();
+            if app.vm.live() {
+                match vm_toggle {
+                    VMToggle::Advance => {
+                        app.vm.advance();
+                        vm_toggle = VMToggle::Exec;
+                    }
+                    VMToggle::Exec => {
+                        app.vm.exec();
+                        vm_toggle = VMToggle::Advance;
+                    }
+                }
             }
         }
     });
 }
-    
+
 use std::f32::consts::PI;
 const VIEW_RES_X: f32 = 800.0;
 const VIEW_RES_Y: f32 = 600.0;
@@ -116,7 +159,7 @@ fn make_mvp(
     let dim = Vec2::new(viewport.x / 2.0, viewport.y / 2.0);
     let view = parallax_ortho_cam(&cam, &dim, 0.0);
     let proj = glm::perspective(FOV, ASPECT, Z_NEAR, Z_FAR);
-    
+
     let t = glm::translation(&glm::vec3(mpos.x, mpos.y, 0.0));
     let s = glm::scaling(&glm::vec3(mscale.x, mscale.y, 1.0));
     let r = glm::rotation(mangle.float, &glm::vec3(0.0, 0.0, 1.0));
@@ -129,10 +172,10 @@ fn wait_for_frame(cf: &mut ControlFlow) {
     let next_frame_time = Instant::now() + FRAME_TIME;
     *cf = ControlFlow::WaitUntil(next_frame_time);
 }
-   
+
 fn get_key<T>(event: &Event<T>) -> Option<VirtualKeyCode> {
     match event {
-        Event::WindowEvent { 
+        Event::WindowEvent {
             event: WindowEvent::KeyboardInput {
                 input: KeyboardInput {
                     virtual_keycode,
@@ -145,7 +188,7 @@ fn get_key<T>(event: &Event<T>) -> Option<VirtualKeyCode> {
         _ => { return None }
     }
 }
-   
+
 fn parallax_ortho(mut x: f32, mut y: f32, w: f32, h: f32, height: f32) -> Mat4 {
     if height != 0.0 {
         const CAM_H: f32 = 1.0;
@@ -157,7 +200,7 @@ fn parallax_ortho(mut x: f32, mut y: f32, w: f32, h: f32, height: f32) -> Mat4 {
             y = 0.0;
         }
         else {
-            let ratio = (s * CAM_H) 
+            let ratio = (s * CAM_H)
                        / (s * (CAM_H - height));
             x *= ratio;
             y *= ratio;
@@ -175,11 +218,9 @@ fn parallax_ortho_cam(cam: &Vec2, dim: &Vec2, height: f32) -> Mat4 {
 //    deg * std::f32::consts::PI / 180.0
 //}
 
-fn make_vm() -> VM {
-    use vsm::vm::*;
+fn make_prog() -> Prog {
     use Inst::*;
-
-    let prog = vec![
+    vec![
         Push(Val(1)),
         Peek,
         Dup,
@@ -190,7 +231,5 @@ fn make_vm() -> VM {
         Add,
         BR(1),
         Print,
-    ];
-
-    VM::new(prog)
+    ]
 }
